@@ -1,0 +1,51 @@
+# OpenAsy Meet's settings. Applied whole or not at all, read again within a minute of a change; a mistake leaves the
+# last good version in place, and the Settings page says what to fix. No screen or API route changes these.
+
+time_zone: Europe/Istanbul
+# Shown in the pages: "People from Acme Corp come straight in".
+organization: Acme Corp
+
+livekit:
+  # LiveKit's API, from Meet's container.
+  url: http://livekit:7880
+  # Where browsers connect: LiveKit's own name behind TLS. The pages allow only this address besides their own.
+  public_url: wss://rtc.example.com
+  api_key: meet
+  # The environment variable that holds the secret, never the secret itself (or mount it at /run/secrets/livekit-secret).
+  api_secret: MEET_LIVEKIT_SECRET
+  # LiveKit's Prometheus port, for CPU and memory on the Server page.
+  metrics_url: http://livekit:6789/metrics
+  media_ports: UDP 50000 to 60000
+
+limits:
+  meetings: 20 # live at once
+  people: 50 # in one meeting
+  video: 720p # what cameras send at most
+  bandwidth: 400 Mbit/s # what the server's link carries
+
+lobby:
+  guests: true # people without an account may ask to join
+  wait: 15m # a knock no one answers goes away
+
+# People are also in the groups their identity provider sends at sign-in.
+groups:
+  sales: { name: Sales, members: [emily.clark@example.com, chris.shaw@example.com] }
+  leadership: { name: Leadership, members: [robert.fox@example.com] }
+  people-team: { name: People team, members: [anna.berg@example.com] }
+
+recording:
+  allowed_for:
+    - group: leadership
+      keep_days: 90
+    - group: sales
+      keep_days: 30
+  # Everyone else cannot start one.
+  never_for: [people-team]
+  storage: /recordings
+  announce: true
+
+# Checked every five minutes with a STUN request from Meet's container.
+turn:
+  - { host: turn.example.com, port: 3478, transport: udp }
+  - { host: turn.example.com, port: 3478, transport: tcp }
+  - { host: turn.example.com, port: 443, transport: tls }

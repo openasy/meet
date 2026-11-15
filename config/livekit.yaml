@@ -1,0 +1,29 @@
+# LiveKit's own settings, for the livekit service in compose.yaml. Its API key and secret come from LIVEKIT_KEYS
+# (compose.yaml sets it from .env), never from this file. https://docs.livekit.io/home/self-hosting/deployment/
+port: 7880
+rtc:
+  # Media over TCP when UDP is blocked, and the UDP ports compose.yaml publishes: open them in the firewall.
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50100
+  use_external_ip: true
+# Shared with Egress, which records rooms.
+redis:
+  address: redis:6379
+# LiveKit's own TURN, for networks that block direct media. Put TLS for turn.example.com on port 443 in front of
+# 5349 (external_tls); hotel and guest networks let that through.
+turn:
+  enabled: true
+  domain: turn.example.com
+  udp_port: 3478
+  tls_port: 5349
+  external_tls: true
+# Who joins and leaves, and recordings done, told to Meet as it happens; signed with the API key's secret.
+webhook:
+  api_key: meet
+  urls:
+    - http://meet:8080/api/v1/livekit/webhook
+# For the Server page: CPU, memory and how long it has run (meet.yaml's livekit.metrics_url).
+prometheus_port: 6789
+logging:
+  level: info

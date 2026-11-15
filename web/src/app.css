@@ -1,0 +1,73 @@
+/* The few layouts this product needs that @openasy/ui's prebuilt styles do not include. Colours stay in the library's tokens. */
+
+.meet-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.meet-halves {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 1280px) {
+  .meet-halves {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .meet-span2 {
+    grid-column: span 2;
+  }
+}
+
+.meet-settings-list {
+  grid-template-columns: minmax(120px, 40%) minmax(0, 1fr);
+  margin: 0;
+}
+
+.meet-code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.meet-wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A camera or a shared screen fills its tile. */
+.meet-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.meet-video-contain {
+  object-fit: contain;
+  background-color: var(--oa-topbar);
+}
+.meet-mirror {
+  transform: scaleX(-1);
+}
+
+/* Remote sound plays from elements no one needs to see. */
+.meet-audio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.meet-narrow {
+  max-width: 36rem;
+}
+
+/* A guest's page: no menu, only the meeting. */
+.meet-guest {
+  padding: 1rem;
+}
+@media (min-width: 768px) {
+  .meet-guest {
+    padding: 1.5rem 2rem;
+  }
+}

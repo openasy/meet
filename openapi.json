@@ -1,0 +1,3607 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenAsy Meet",
+    "version": "0.1.0",
+    "description": "Video meetings on LiveKit: meeting links, access tokens for the call, a lobby for guests, recordings by Egress where meet.yaml allows them, and the media server's health. Members (the user role) start, join and record their own meetings; viewers see every meeting and the server; editors' tokens let Calendar and Chat make meetings for someone; admins also stop recordings, delete any, and manage members and tokens.",
+    "license": {
+      "name": "AGPL-3.0-only",
+      "identifier": "AGPL-3.0-only"
+    }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "session": []
+    },
+    {
+      "apiToken": []
+    },
+    {
+      "adminToken": []
+    }
+  ],
+  "paths": {
+    "/api/v1/version": {
+      "get": {
+        "operationId": "version",
+        "tags": [
+          "Product"
+        ],
+        "summary": "The product and its version",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Version"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "operationId": "products",
+        "tags": [
+          "Product"
+        ],
+        "summary": "The install's other OpenAsy products, for the switcher",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Products"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "me",
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Who I am here: my groups, whether I may record, and my own room",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/meetings": {
+      "get": {
+        "operationId": "listMeetings",
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "A day's meetings, with how many joined",
+        "description": "Viewers see every meeting; members those they organise, are invited to or joined. The day is in meet.yaml's time zone.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "day",
+            "in": "query",
+            "required": false,
+            "description": "YYYY-MM-DD; today when left out.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      },
+      "post": {
+        "operationId": "createMeeting",
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Make a meeting link",
+        "description": "A member makes one for themselves. Calendar and Chat make them with an editor's token, for an organiser, with the event's or channel's id as reference.\n\nAny member (the user role is enough).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeetingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Made before with this reference.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meeting"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Made.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meeting"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/meetings/{id}": {
+      "get": {
+        "operationId": "getMeeting",
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "A meeting and its latest call",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meeting"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      },
+      "patch": {
+        "operationId": "updateMeeting",
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Change a meeting's title, times, invitation or recording",
+        "description": "The organiser or an editor, such as Calendar when the event moves.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeetingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Meeting"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      },
+      "delete": {
+        "operationId": "deleteMeeting",
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Delete a meeting; a live call ends for everyone",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/meetings/{id}/join": {
+      "post": {
+        "operationId": "joinMeeting",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "Join as a signed-in member, past the lobby",
+        "description": "Opens the room in LiveKit within meet.yaml's limits and answers a token for this room only. Only people, not API tokens.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Join"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/meetings/{id}/lobby": {
+      "get": {
+        "operationId": "lobby",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "Who waits to be let in",
+        "description": "The organiser, an admin, or a member in the call.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lobby"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/meetings/{id}/lobby/{entry}/admit": {
+      "post": {
+        "operationId": "admit",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "Let a guest in",
+        "description": "Only while someone from the company is in the call.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entry",
+            "in": "path",
+            "required": true,
+            "description": "The lobby entry's id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Decision"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/meetings/{id}/lobby/{entry}/deny": {
+      "post": {
+        "operationId": "deny",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "Do not let a guest in",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entry",
+            "in": "path",
+            "required": true,
+            "description": "The lobby entry's id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Decision"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/meetings/{id}/recording": {
+      "post": {
+        "operationId": "startRecording",
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "Start recording the call",
+        "description": "The organiser, when the meeting allows it and meet.yaml lets them record. Egress records the room; everyone sees the mark.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recording"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      },
+      "delete": {
+        "operationId": "stopRecording",
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "Stop the recording",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recording"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/meetings/{id}/stats": {
+      "post": {
+        "operationId": "memberStats",
+        "tags": [
+          "Calls"
+        ],
+        "summary": "How my browser connects to the call",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Stats"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Noted."
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/join/{id}": {
+      "get": {
+        "operationId": "joinInfo",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "What a guest sees before asking to join",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinInfo"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/join/{id}/lobby": {
+      "post": {
+        "operationId": "knock",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "Ask to join as a guest",
+        "description": "Only the name and, if given, the email are kept, until the call ends. No IP address is stored.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The meeting's id: the last part of its link, such as k7f-3qd-wx2 or emily-clark.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Waiting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Knock"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/lobby": {
+      "get": {
+        "operationId": "lobbyStatus",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "A guest's place in the lobby, and the token once let in",
+        "parameters": [
+          {
+            "name": "X-Lobby-Ticket",
+            "in": "header",
+            "required": true,
+            "description": "The ticket the knock answered with.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LobbyStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": []
+      },
+      "delete": {
+        "operationId": "leaveLobby",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "Stop waiting",
+        "parameters": [
+          {
+            "name": "X-Lobby-Ticket",
+            "in": "header",
+            "required": true,
+            "description": "The ticket the knock answered with.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Left."
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/lobby/stats": {
+      "post": {
+        "operationId": "guestStats",
+        "tags": [
+          "Lobby"
+        ],
+        "summary": "How a guest's browser connects to the call",
+        "parameters": [
+          {
+            "name": "X-Lobby-Ticket",
+            "in": "header",
+            "required": true,
+            "description": "The ticket the knock answered with.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Stats"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Noted."
+          },
+          "400": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/livekit/webhook": {
+      "post": {
+        "operationId": "livekitWebhook",
+        "tags": [
+          "LiveKit"
+        ],
+        "summary": "LiveKit's webhooks: rooms, participants and Egress",
+        "description": "Signed by LiveKit with the API key and secret: the Authorization header is a JWT whose sha256 claim is the body's hash.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/webhook+json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Read."
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "413": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/v1/recordings": {
+      "get": {
+        "operationId": "listRecordings",
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "Recordings, who allowed them and when each is deleted",
+        "description": "Viewers see all; members the ones they started or were in.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Words in the meeting's title or who started it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/recordings/{id}": {
+      "get": {
+        "operationId": "getRecording",
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "A recording",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The recording's id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recording"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      },
+      "delete": {
+        "operationId": "deleteRecording",
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "Delete a recording now, before its day",
+        "description": "Who started it, or an admin.\n\nAny member (the user role is enough).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The recording's id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user"
+      }
+    },
+    "/api/v1/recordings/{id}/file": {
+      "get": {
+        "operationId": "downloadRecording",
+        "tags": [
+          "Recordings"
+        ],
+        "summary": "The recording's MP4 file",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The recording's id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "Part of the file (Range).",
+            "content": {
+              "video/mp4": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "user",
+        "description": "Any member (the user role is enough)."
+      }
+    },
+    "/api/v1/server": {
+      "get": {
+        "operationId": "server",
+        "tags": [
+          "Server"
+        ],
+        "summary": "LiveKit and TURN, what flows through them today, and how each person connects",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Server"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "viewer",
+        "description": "Needs the viewer role."
+      }
+    },
+    "/api/v1/integrations": {
+      "get": {
+        "operationId": "integrations",
+        "tags": [
+          "Server"
+        ],
+        "summary": "LiveKit, its webhooks and Egress, Identity's groups and TURN",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integrations"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "viewer",
+        "description": "Needs the viewer role."
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "operationId": "settings",
+        "tags": [
+          "Server"
+        ],
+        "summary": "meet.yaml as applied",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          },
+          {
+            "apiToken": []
+          },
+          {
+            "adminToken": []
+          }
+        ],
+        "x-openasy-role": "viewer",
+        "description": "Needs the viewer role."
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Alive",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "readyz",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Ready",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Not ready.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "metrics",
+        "tags": [
+          "Product"
+        ],
+        "summary": "Prometheus metrics",
+        "responses": {
+          "200": {
+            "description": "Metrics.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "openasy_session"
+      },
+      "apiToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "An API token made under Settings, API tokens."
+      },
+      "adminToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Tests only."
+      }
+    },
+    "responses": {
+      "Problem": {
+        "description": "A problem (RFC 9457).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid-token",
+              "invalid-json",
+              "invalid-body",
+              "forbidden",
+              "not-found",
+              "conflict",
+              "limit-reached",
+              "guests-not-allowed",
+              "rate-limited",
+              "media-server-unavailable",
+              "payload-too-large",
+              "internal-error",
+              "unauthenticated",
+              "invalid-credentials",
+              "mfa-required",
+              "mfa-setup-required",
+              "cross-site"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "Version": {
+        "type": "object",
+        "required": [
+          "product",
+          "version"
+        ],
+        "properties": {
+          "product": {
+            "const": "meet"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "Products": {
+        "type": "object",
+        "required": [
+          "products"
+        ],
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "url"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Meeting": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "title",
+          "source",
+          "channel",
+          "reference",
+          "organizer",
+          "startsAt",
+          "endsAt",
+          "at",
+          "invited",
+          "status",
+          "joined",
+          "guests",
+          "minutes",
+          "inCall",
+          "startedAt",
+          "lobby",
+          "allowRecording",
+          "recording",
+          "recorded",
+          "admitted",
+          "media",
+          "createdAt",
+          "you"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "The link to share: anyone with it may ask to join.",
+            "examples": [
+              "https://meet.example.com/k7f-3qd-wx2"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "calendar",
+              "chat",
+              "hand",
+              "room"
+            ],
+            "description": "Where the link came from; room is a person's own room."
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "The Chat channel a call was started from, such as #support."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "The id Calendar or Chat gave it, such as the event's UID."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "organizer": {
+            "type": "object",
+            "required": [
+              "email",
+              "name"
+            ],
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "startsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it started (its first call that day), or starts, or the link was made."
+          },
+          "invited": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "People on the invitation; null when there is none."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "live",
+              "upcoming",
+              "ended"
+            ]
+          },
+          "joined": {
+            "type": "integer",
+            "description": "People who joined: in the day listed, or in the latest call."
+          },
+          "guests": {
+            "type": "integer",
+            "description": "Of those, how many came in through the lobby."
+          },
+          "minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Length of its calls, so far for a live one."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "inCall": {
+            "type": "object",
+            "required": [
+              "people",
+              "guests"
+            ],
+            "properties": {
+              "people": {
+                "type": "integer"
+              },
+              "guests": {
+                "type": "integer"
+              }
+            }
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lobby": {
+            "type": "integer",
+            "description": "People waiting in the lobby now."
+          },
+          "allowRecording": {
+            "type": "boolean",
+            "description": "The organiser allowed recording when the meeting was made."
+          },
+          "recording": {
+            "type": "boolean",
+            "description": "A recording runs now."
+          },
+          "recorded": {
+            "type": "boolean"
+          },
+          "admitted": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "by",
+                  "at"
+                ],
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "media": {
+            "type": "object",
+            "required": [
+              "direct",
+              "relayed"
+            ],
+            "properties": {
+              "direct": {
+                "type": "integer"
+              },
+              "relayed": {
+                "type": "integer",
+                "description": "Connections through TURN."
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "you": {
+            "type": "object",
+            "required": [
+              "organizer",
+              "invited",
+              "canManage"
+            ],
+            "properties": {
+              "organizer": {
+                "type": "boolean"
+              },
+              "invited": {
+                "type": "boolean"
+              },
+              "canManage": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "MeetingInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "calendar",
+              "chat",
+              "hand"
+            ],
+            "description": "hand when left out."
+          },
+          "channel": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Calendar's or Chat's own id: a second request with it answers the meeting made the first time."
+          },
+          "organizer": {
+            "type": "object",
+            "required": [
+              "email"
+            ],
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "description": "For editors' tokens (Calendar, Chat): who the meeting is for."
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "invited": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowRecording": {
+            "type": "boolean",
+            "description": "Only when meet.yaml lets the organiser record."
+          }
+        }
+      },
+      "MeetingList": {
+        "type": "object",
+        "required": [
+          "day",
+          "timeZone",
+          "meetings",
+          "totals"
+        ],
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "meetings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Meeting"
+            }
+          },
+          "totals": {
+            "type": "object",
+            "required": [
+              "meetings",
+              "live",
+              "upcoming",
+              "ended",
+              "joined",
+              "guests",
+              "averageMinutes",
+              "recorded",
+              "firstRecorded"
+            ],
+            "properties": {
+              "meetings": {
+                "type": "integer"
+              },
+              "live": {
+                "type": "integer"
+              },
+              "upcoming": {
+                "type": "integer"
+              },
+              "ended": {
+                "type": "integer"
+              },
+              "joined": {
+                "type": "integer"
+              },
+              "guests": {
+                "type": "integer"
+              },
+              "averageMinutes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recorded": {
+                "type": "integer"
+              },
+              "firstRecorded": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "title",
+                      "group"
+                    ],
+                    "properties": {
+                      "title": {
+                        "type": "string"
+                      },
+                      "group": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "Me": {
+        "type": "object",
+        "required": [
+          "member",
+          "organization",
+          "groups",
+          "recording",
+          "room",
+          "guests",
+          "limits",
+          "media"
+        ],
+        "properties": {
+          "member": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "email",
+              "role"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "viewer",
+                  "editor",
+                  "admin",
+                  "owner"
+                ]
+              }
+            }
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "recording": {
+            "description": "Whether meet.yaml lets this person record their meetings, and for how long the file is kept.",
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "allowed",
+                  "group",
+                  "groupName",
+                  "keepDays"
+                ],
+                "properties": {
+                  "allowed": {
+                    "const": true
+                  },
+                  "group": {
+                    "type": "string"
+                  },
+                  "groupName": {
+                    "type": "string"
+                  },
+                  "keepDays": {
+                    "type": "integer"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "allowed",
+                  "reason",
+                  "group",
+                  "groupName"
+                ],
+                "properties": {
+                  "allowed": {
+                    "const": false
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "off",
+                      "never",
+                      "not-in-group"
+                    ]
+                  },
+                  "group": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "groupName": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "room": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meeting"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The person's own room; null for an API token."
+          },
+          "guests": {
+            "type": "boolean"
+          },
+          "limits": {
+            "type": "object",
+            "required": [
+              "people",
+              "video"
+            ],
+            "properties": {
+              "people": {
+                "type": "integer"
+              },
+              "video": {
+                "type": "string",
+                "enum": [
+                  "360p",
+                  "540p",
+                  "720p",
+                  "1080p"
+                ]
+              }
+            }
+          },
+          "media": {
+            "type": "object",
+            "required": [
+              "url",
+              "host"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "host": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "Join": {
+        "type": "object",
+        "required": [
+          "url",
+          "identity",
+          "token",
+          "meeting"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "LiveKit's address for browsers, wss://."
+          },
+          "identity": {
+            "type": "string",
+            "description": "u:<member id> or g:<lobby id>."
+          },
+          "token": {
+            "type": "string",
+            "description": "A LiveKit access token for this room only, valid 15 minutes for joining; LiveKit renews it while connected."
+          },
+          "meeting": {
+            "$ref": "#/components/schemas/Meeting"
+          }
+        },
+        "description": "What a browser needs to join the call with livekit-client."
+      },
+      "JoinInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "organization",
+          "organizer",
+          "guests",
+          "live",
+          "recording",
+          "allowRecording"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "organizer": {
+            "type": "string"
+          },
+          "guests": {
+            "type": "boolean",
+            "description": "Whether people without an account may ask to join."
+          },
+          "live": {
+            "type": "boolean"
+          },
+          "recording": {
+            "type": "boolean",
+            "description": "A recording runs now: people are told before they come in."
+          },
+          "allowRecording": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LobbyStatus": {
+        "type": "object",
+        "required": [
+          "id",
+          "state",
+          "meeting",
+          "join"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "waiting",
+              "admitted",
+              "denied",
+              "expired",
+              "left"
+            ]
+          },
+          "meeting": {
+            "$ref": "#/components/schemas/JoinInfo"
+          },
+          "join": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "url",
+                  "identity",
+                  "token"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "LiveKit's address for browsers, wss://."
+                  },
+                  "identity": {
+                    "type": "string",
+                    "description": "u:<member id> or g:<lobby id>."
+                  },
+                  "token": {
+                    "type": "string",
+                    "description": "A LiveKit access token for this room only, valid 15 minutes for joining; LiveKit renews it while connected."
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Once let in, and while someone from the company is in the call."
+          }
+        }
+      },
+      "Knock": {
+        "type": "object",
+        "required": [
+          "ticket",
+          "id",
+          "state",
+          "meeting"
+        ],
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "description": "The guest's place in the lobby: send it in X-Lobby-Ticket. Shown once."
+          },
+          "id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "waiting"
+            ]
+          },
+          "meeting": {
+            "$ref": "#/components/schemas/JoinInfo"
+          }
+        }
+      },
+      "Lobby": {
+        "type": "object",
+        "required": [
+          "waiting"
+        ],
+        "properties": {
+          "waiting": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "email",
+                "invited",
+                "since"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "email": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "invited": {
+                  "type": "boolean",
+                  "description": "Their email is on the invitation."
+                },
+                "since": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Decision": {
+        "type": "object",
+        "required": [
+          "id",
+          "state"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "admitted",
+              "denied"
+            ]
+          }
+        }
+      },
+      "Stats": {
+        "type": "object",
+        "description": "How a browser connects, every few seconds while in a call: shown on the Server page for 90 seconds and not kept.",
+        "properties": {
+          "path": {
+            "type": "string",
+            "enum": [
+              "udp",
+              "tcp",
+              "turn-udp",
+              "turn-tcp",
+              "turn-tls",
+              "unknown"
+            ]
+          },
+          "rttMs": {
+            "type": "number"
+          },
+          "lossPercent": {
+            "type": "number"
+          },
+          "sendKbps": {
+            "type": "number"
+          },
+          "receiveKbps": {
+            "type": "number"
+          },
+          "sending": {
+            "type": "string",
+            "description": "What it sends: camera:720p, screen:1080p, audio or none."
+          },
+          "browser": {
+            "type": "string",
+            "description": "Such as Firefox 132 or Safari on iPhone."
+          }
+        }
+      },
+      "Recording": {
+        "type": "object",
+        "required": [
+          "id",
+          "meetingId",
+          "title",
+          "state",
+          "startedBy",
+          "group",
+          "startedAt",
+          "endedAt",
+          "seconds",
+          "size",
+          "file",
+          "people",
+          "guests",
+          "deleteOn",
+          "error",
+          "canDelete"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "meetingId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "recording",
+              "saving",
+              "ready",
+              "failed"
+            ]
+          },
+          "startedBy": {
+            "type": "object",
+            "required": [
+              "email",
+              "name"
+            ],
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "group": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "keepDays"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "keepDays": {
+                "type": "integer"
+              }
+            }
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seconds": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes."
+          },
+          "file": {
+            "type": "string"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Members who were in the call while it ran and saw the mark."
+          },
+          "guests": {
+            "type": "integer",
+            "description": "Guests who were in it; they were told in the lobby."
+          },
+          "deleteOn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canDelete": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecordingList": {
+        "type": "object",
+        "required": [
+          "recordings",
+          "totals",
+          "policy"
+        ],
+        "properties": {
+          "recordings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recording"
+            }
+          },
+          "totals": {
+            "type": "object",
+            "required": [
+              "kept",
+              "bytes",
+              "capacity",
+              "meetingsLast30Days",
+              "nextDeletion"
+            ],
+            "properties": {
+              "kept": {
+                "type": "integer"
+              },
+              "bytes": {
+                "type": "integer"
+              },
+              "capacity": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "description": "Size of the storage folder's disk, in bytes."
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "meetingsLast30Days": {
+                "type": "integer"
+              },
+              "nextDeletion": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "on",
+                      "title",
+                      "keepDays"
+                    ],
+                    "properties": {
+                      "on": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "keepDays": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "policy": {
+            "type": "object",
+            "required": [
+              "on",
+              "groups",
+              "never",
+              "yaml"
+            ],
+            "properties": {
+              "on": {
+                "type": "boolean"
+              },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "keepDays"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "keepDays": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "never": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "yaml": {
+                "type": "string",
+                "description": "The recording part of meet.yaml as applied."
+              }
+            }
+          }
+        }
+      },
+      "Server": {
+        "type": "object",
+        "required": [
+          "livekit",
+          "limits",
+          "live",
+          "bandwidth",
+          "turn",
+          "connections"
+        ],
+        "properties": {
+          "livekit": {
+            "type": "object",
+            "required": [
+              "url",
+              "publicUrl",
+              "ok",
+              "at",
+              "error",
+              "ms",
+              "rooms",
+              "mediaPorts",
+              "cpuPercent",
+              "cores",
+              "memoryBytes",
+              "startedAt",
+              "metrics"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "publicUrl": {
+                "type": "string"
+              },
+              "ok": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ms": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rooms": {
+                "type": "integer"
+              },
+              "mediaPorts": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cpuPercent": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cores": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "memoryBytes": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "startedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "metrics": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "ok",
+                      "at",
+                      "error"
+                    ],
+                    "properties": {
+                      "ok": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "at": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "error": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "limits": {
+            "type": "object",
+            "required": [
+              "meetings",
+              "people",
+              "video",
+              "bandwidth"
+            ],
+            "properties": {
+              "meetings": {
+                "type": "integer"
+              },
+              "people": {
+                "type": "integer"
+              },
+              "video": {
+                "type": "string"
+              },
+              "bandwidth": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "live": {
+            "type": "object",
+            "required": [
+              "meetings",
+              "people",
+              "lobby"
+            ],
+            "properties": {
+              "meetings": {
+                "type": "integer"
+              },
+              "people": {
+                "type": "integer"
+              },
+              "lobby": {
+                "type": "integer"
+              }
+            }
+          },
+          "bandwidth": {
+            "type": "object",
+            "required": [
+              "nowMbps",
+              "capacityMbps",
+              "samples"
+            ],
+            "properties": {
+              "nowMbps": {
+                "type": "number"
+              },
+              "capacityMbps": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "samples": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "at",
+                    "totalMbps",
+                    "relayedMbps"
+                  ],
+                  "properties": {
+                    "at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "totalMbps": {
+                      "type": "number"
+                    },
+                    "relayedMbps": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "turn": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "host",
+                "port",
+                "transport",
+                "ok",
+                "ms",
+                "error",
+                "at"
+              ],
+              "properties": {
+                "host": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "integer"
+                },
+                "transport": {
+                  "type": "string",
+                  "enum": [
+                    "udp",
+                    "tcp",
+                    "tls"
+                  ]
+                },
+                "ok": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "ms": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "error": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "identity",
+                "name",
+                "guest",
+                "meetingId",
+                "meeting",
+                "path",
+                "rttMs",
+                "lossPercent",
+                "sending",
+                "browser",
+                "at"
+              ],
+              "properties": {
+                "identity": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "guest": {
+                  "type": "boolean"
+                },
+                "meetingId": {
+                  "type": "string"
+                },
+                "meeting": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string",
+                  "enum": [
+                    "udp",
+                    "tcp",
+                    "turn-udp",
+                    "turn-tcp",
+                    "turn-tls",
+                    "unknown"
+                  ]
+                },
+                "rttMs": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "lossPercent": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sending": {
+                  "type": "string"
+                },
+                "browser": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Integrations": {
+        "type": "object",
+        "required": [
+          "livekit",
+          "webhooks",
+          "egress",
+          "metrics",
+          "identity",
+          "turn",
+          "api"
+        ],
+        "properties": {
+          "livekit": {
+            "type": "object",
+            "required": [
+              "url",
+              "publicUrl",
+              "secret",
+              "ok",
+              "at",
+              "error",
+              "ms",
+              "rooms"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "publicUrl": {
+                "type": "string"
+              },
+              "secret": {
+                "type": "boolean"
+              },
+              "ok": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ms": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rooms": {
+                "type": "integer"
+              }
+            }
+          },
+          "webhooks": {
+            "type": "object",
+            "required": [
+              "url",
+              "ok",
+              "at",
+              "error",
+              "count",
+              "last"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "ok": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "count": {
+                "type": "integer"
+              },
+              "last": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "egress": {
+            "type": "object",
+            "required": [
+              "on",
+              "storage",
+              "ok",
+              "at",
+              "error"
+            ],
+            "properties": {
+              "on": {
+                "type": "boolean"
+              },
+              "storage": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ok": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "required": [
+              "url",
+              "ok",
+              "at",
+              "error"
+            ],
+            "properties": {
+              "url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "ok": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "identity": {
+            "type": "object",
+            "required": [
+              "peopleWithGroups",
+              "fileGroups"
+            ],
+            "properties": {
+              "peopleWithGroups": {
+                "type": "integer"
+              },
+              "fileGroups": {
+                "type": "integer"
+              }
+            }
+          },
+          "turn": {
+            "type": "object",
+            "required": [
+              "listeners",
+              "reachable"
+            ],
+            "properties": {
+              "listeners": {
+                "type": "integer"
+              },
+              "reachable": {
+                "type": "integer"
+              }
+            }
+          },
+          "api": {
+            "type": "object",
+            "required": [
+              "meetings"
+            ],
+            "properties": {
+              "meetings": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Settings": {
+        "type": "object",
+        "required": [
+          "file",
+          "yaml",
+          "config"
+        ],
+        "properties": {
+          "file": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "path",
+                  "appliedAt",
+                  "error",
+                  "warnings"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "appliedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "error": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "warnings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "yaml": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "description": "meet.yaml as applied, with defaults filled in. The API secret is only named, never given."
+          }
+        }
+      }
+    }
+  }
+}

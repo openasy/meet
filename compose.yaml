@@ -1,0 +1,85 @@
+# Meet: the meeting pages and API (this repository) next to LiveKit, the open-source media server that carries every
+# call, Egress, which records a room where meet.yaml allows it, and Redis, which LiveKit and Egress share. Meet never
+# carries media itself. See the README for the names and ports to open.
+#
+#   openssl rand -hex 32 > openasy-kek                                    # sign-in secrets (ADR 0021); keep it with your backups
+#   printf 'MEET_LIVEKIT_SECRET=%s\n' "$(openssl rand -hex 32)" > .env    # LiveKit's API secret, for all four services
+#   $EDITOR config/meet.yaml config/livekit.yaml                          # your names, groups and who may record
+#   docker compose up -d
+#   docker compose logs meet | grep 'no owner yet'                        # the one-time link that creates the owner account
+services:
+  livekit:
+    # Pin the exact version you run; Meet is tested against this one.
+    image: livekit/livekit-server:v1.13.11
+    restart: unless-stopped
+    command: ["--config", "/etc/livekit.yaml"]
+    depends_on: [redis]
+    environment:
+      LIVEKIT_KEYS: "meet: ${MEET_LIVEKIT_SECRET:?set MEET_LIVEKIT_SECRET in .env}"
+    volumes:
+      - ./config/livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "127.0.0.1:7880:7880" # signalling; put TLS in front as wss://rtc.example.com (meet.yaml's livekit.public_url)
+      - "7881:7881" # media over TCP
+      - "50000-50100:50000-50100/udp" # media over UDP
+      - "3478:3478/udp" # TURN over UDP
+      - "127.0.0.1:5349:5349" # TURN over TLS, behind your TLS proxy on turn.example.com:443
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  egress:
+    # Only needed when meet.yaml allows recordings.
+    image: livekit/egress:v1.15.0
+    restart: unless-stopped
+    # After meet, so the shared folder is the one Meet's image makes, which Egress's own user may write to.
+    depends_on: [livekit, redis, meet]
+    # Egress records with a headless Chrome, whose sandbox needs this.
+    cap_add: [SYS_ADMIN]
+    environment:
+      EGRESS_CONFIG_BODY: |
+        api_key: meet
+        api_secret: ${MEET_LIVEKIT_SECRET}
+        ws_url: ws://livekit:7880
+        redis:
+          address: redis:6379
+    volumes:
+      - recordings:/recordings # the files; Meet lists, serves and deletes them
+
+  meet:
+    image: ghcr.io/openasy/meet:0.1.0
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    ports:
+      - "127.0.0.1:8080:8080" # pages and API; put a TLS proxy in front as https://meet.example.com
+    volumes:
+      - meet-data:/data # SQLite database: meetings, who was in each call, the lobby and the recordings' list
+      - recordings:/recordings # Egress's files, read and deleted on their day
+      - ./config:/config:ro # meet.yaml; mount the folder so an editor's save reaches it
+    secrets:
+      - openasy-kek # mounted at /run/secrets/openasy-kek
+    environment:
+      # The address people open Meet at, and the start of every meeting's link.
+      MEET_PUBLIC_URL: ${MEET_PUBLIC_URL:-http://localhost:8080}
+      MEET_CONFIG: /config/meet.yaml
+      MEET_LIVEKIT_SECRET: ${MEET_LIVEKIT_SECRET}
+      # Sign in with your identity provider (OIDC), see the README. Everyone from the company signs in as a user and
+      # skips the lobby; the groups it sends decide who may record:
+      # OPENASY_OIDC_ISSUER: https://login.example.com
+      # OPENASY_OIDC_CLIENT_ID: meet
+      # OPENASY_OIDC_CLIENT_SECRET: ${OPENASY_OIDC_CLIENT_SECRET}
+      # OPENASY_OIDC_SCOPES: openid email profile groups
+      # OPENASY_OIDC_DEFAULT_ROLE: user
+
+volumes:
+  meet-data:
+  recordings:
+
+secrets:
+  openasy-kek:
+    file: ./openasy-kek
